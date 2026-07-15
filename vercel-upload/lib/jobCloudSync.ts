@@ -7,14 +7,8 @@ type CloudJobsPayload = {
   updatedAt?: string;
 };
 
-export class CloudSyncUnauthorizedError extends Error {}
-
 async function parseResponse(response: Response) {
   const payload = (await response.json().catch(() => ({}))) as CloudJobsPayload & { error?: string };
-
-  if (response.status === 401) {
-    throw new CloudSyncUnauthorizedError("当前浏览器尚未启用云端同步。");
-  }
 
   if (!response.ok) {
     throw new Error(payload.error || "云端保存暂时不可用。");
@@ -42,5 +36,4 @@ export async function saveCloudJobs(jobs: Job[]) {
 
   return parseResponse(response);
 }
-
 

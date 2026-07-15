@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import {
-  CloudSyncUnauthorizedError,
   fetchCloudJobs,
   saveCloudJobs,
   type JobSyncStatus
@@ -46,13 +45,8 @@ export function useSyncedJobs() {
         markJobsSynced();
         setSyncStatus("saved");
       }
-    } catch (error) {
-      if (error instanceof CloudSyncUnauthorizedError) {
-        cloudEnabledRef.current = false;
-        setSyncStatus("local");
-      } else {
-        setSyncStatus("error");
-      }
+    } catch {
+      setSyncStatus("error");
     }
   }, []);
 
@@ -81,10 +75,8 @@ export function useSyncedJobs() {
         saveJobs(cloud.jobs, { markPending: false });
         markJobsSynced();
         setSyncStatus("saved");
-      } catch (error) {
-        if (error instanceof CloudSyncUnauthorizedError) {
-          setSyncStatus("local");
-        } else if (!controller.signal.aborted) {
+      } catch {
+        if (!controller.signal.aborted) {
           setSyncStatus("error");
         }
       }
@@ -136,4 +128,3 @@ export function useSyncedJobs() {
 
   return { jobs, setJobs, loaded, syncStatus };
 }
-

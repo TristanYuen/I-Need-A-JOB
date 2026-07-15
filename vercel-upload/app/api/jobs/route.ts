@@ -1,7 +1,5 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { readJobsFromDatabase, writeJobsToDatabase } from "@/lib/jobDatabase";
-import { isValidSyncSecret, jobSyncCookieName } from "@/lib/jobSyncAuth";
 import type { Job } from "@/lib/jobTypes";
 
 export const runtime = "nodejs";
@@ -28,16 +26,7 @@ function isJobList(value: unknown): value is Job[] {
   );
 }
 
-async function isAuthorized() {
-  const cookieStore = await cookies();
-  return isValidSyncSecret(cookieStore.get(jobSyncCookieName)?.value);
-}
-
 export async function GET() {
-  if (!(await isAuthorized())) {
-    return NextResponse.json({ error: "当前浏览器尚未启用云端同步。" }, { status: 401 });
-  }
-
   try {
     const data = await readJobsFromDatabase();
     return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
@@ -48,10 +37,6 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  if (!(await isAuthorized())) {
-    return NextResponse.json({ error: "当前浏览器尚未启用云端同步。" }, { status: 401 });
-  }
-
   let body: { jobs?: unknown };
   try {
     body = (await request.json()) as { jobs?: unknown };
@@ -71,5 +56,4 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: message }, { status: 503 });
   }
 }
-
 
