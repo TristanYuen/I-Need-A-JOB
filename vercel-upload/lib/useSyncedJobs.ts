@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import {
+  CloudEncodingDamageError,
   fetchCloudJobs,
   saveCloudJobs,
   type JobSyncStatus
@@ -45,7 +46,24 @@ export function useSyncedJobs() {
         markJobsSynced();
         setSyncStatus("saved");
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof CloudEncodingDamageError) {
+        try {
+          const cloud = await fetchCloudJobs();
+          if (cloud.jobs) {
+            applyingCloudRef.current = true;
+            latestJobsRef.current = cloud.jobs;
+            setJobsState(cloud.jobs);
+            saveJobs(cloud.jobs, { markPending: false });
+            markJobsSynced();
+            setSyncStatus("saved");
+            return;
+          }
+        } catch {
+          // Fall through to the local fallback status below.
+        }
+      }
+
       setSyncStatus("error");
     }
   }, []);
