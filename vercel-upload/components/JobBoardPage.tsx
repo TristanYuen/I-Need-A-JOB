@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JobDrawer } from "@/components/JobDrawer";
@@ -10,14 +10,14 @@ import { StatCards } from "@/components/StatCards";
 import { ViewTabs } from "@/components/ViewTabs";
 import { exportJobsToExcel } from "@/lib/excelExport";
 import { filterJobs, getViewCounts, hasActiveColumnFilters } from "@/lib/jobFilters";
-import { clearStoredJobs, loadJobs, saveJobs } from "@/lib/jobStorage";
+import { clearStoredJobs } from "@/lib/jobStorage";
 import type { ColumnFilter, ColumnFilters, ColumnKey, Job, JobView, SortState, TimelineItem } from "@/lib/jobTypes";
 import { createEmptyJob, createSampleJobs } from "@/lib/sampleJobs";
+import { useSyncedJobs } from "@/lib/useSyncedJobs";
 import { cn } from "@/lib/utils";
 
 export function JobBoardPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { jobs, setJobs, loaded, syncStatus } = useSyncedJobs();
   const [view, setView] = useState<JobView>("all");
   const [search, setSearch] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
@@ -27,17 +27,6 @@ export function JobBoardPage() {
   const [toast, setToast] = useState("");
   const [aiToolMode, setAiToolMode] = useState<"import" | "review" | null>(null);
   const toastTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    setJobs(loadJobs());
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (loaded) {
-      saveJobs(jobs);
-    }
-  }, [jobs, loaded]);
 
   useEffect(() => {
     return () => {
@@ -315,6 +304,17 @@ export function JobBoardPage() {
           {toast}
         </div>
       ) : null}
+
+      <div
+        aria-live="polite"
+        className="fixed bottom-5 right-5 z-50 rounded-full border border-white/70 bg-white/90 px-3 py-2 text-xs font-medium text-slate-500 shadow-sm backdrop-blur"
+      >
+        {syncStatus === "checking" ? "正在检查云端数据…" : null}
+        {syncStatus === "saving" ? "正在保存到云端…" : null}
+        {syncStatus === "saved" ? "已保存到云端" : null}
+        {syncStatus === "local" ? "已保存到本机" : null}
+        {syncStatus === "error" ? "云端暂不可用，已保存到本机" : null}
+      </div>
     </div>
   );
 }

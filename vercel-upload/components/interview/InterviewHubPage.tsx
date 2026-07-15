@@ -1,12 +1,12 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InterviewTopBar } from "@/components/interview/InterviewTopBar";
 import { getInterviewPrep } from "@/lib/interviewPrep";
-import { loadJobs, saveJobs } from "@/lib/jobStorage";
 import type { DeepSeekPrep, Job } from "@/lib/jobTypes";
 import { getResumes } from "@/lib/resumeStorage";
+import { useSyncedJobs } from "@/lib/useSyncedJobs";
 
 function PrepList({ items }: { items: string[] }) {
   return (
@@ -20,24 +20,11 @@ function PrepList({ items }: { items: string[] }) {
     </ul>
   );
 }
-
 export function InterviewHubPage({ jobId }: { jobId: string }) {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { jobs, setJobs, loaded } = useSyncedJobs();
   const [message, setMessage] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const messageTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    setJobs(loadJobs());
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (loaded) {
-      saveJobs(jobs);
-    }
-  }, [jobs, loaded]);
 
   useEffect(() => {
     return () => {
@@ -309,3 +296,4 @@ export function InterviewHubPage({ jobId }: { jobId: string }) {
     </main>
   );
 }
+

@@ -1,29 +1,17 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AutoSaveTextarea } from "@/components/interview/AutoSaveTextarea";
 import { InterviewTopBar } from "@/components/interview/InterviewTopBar";
 import { getInterviewModule } from "@/lib/interviewModules";
 import type { InterviewPrepField } from "@/lib/interviewModules";
 import { getInterviewPrep } from "@/lib/interviewPrep";
-import { loadJobs, saveJobs } from "@/lib/jobStorage";
 import type { InterviewPrep, Job } from "@/lib/jobTypes";
+import { useSyncedJobs } from "@/lib/useSyncedJobs";
 
 export function InterviewModulePage({ jobId, moduleId }: { jobId: string; moduleId: string }) {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setJobs(loadJobs());
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (loaded) {
-      saveJobs(jobs);
-    }
-  }, [jobs, loaded]);
+  const { jobs, setJobs, loaded } = useSyncedJobs();
 
   const job = useMemo(() => jobs.find((item) => item.id === jobId), [jobs, jobId]);
   const module = getInterviewModule(moduleId);

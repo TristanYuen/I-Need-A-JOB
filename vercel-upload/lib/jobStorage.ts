@@ -3,12 +3,12 @@ import initialJobs from "@/lib/initialJobs.json";
 
 const storageKey = "autumn_job_tracker_jobs_v1";
 const seedVersionKey = "autumn_job_tracker_seed_version";
+const pendingSyncKey = "autumn_job_tracker_pending_sync_v1";
 const seedVersion = "2026-07-16-six-jobs";
 
 function createInitialJobs() {
   return structuredClone(initialJobs) as Job[];
 }
-
 function isBrowser() {
   return typeof window !== "undefined";
 }
@@ -75,9 +75,22 @@ export function loadJobs() {
   }
 }
 
-export function saveJobs(jobs: Job[]) {
+export function saveJobs(jobs: Job[], options: { markPending?: boolean } = {}) {
   if (isBrowser()) {
     window.localStorage.setItem(storageKey, JSON.stringify(jobs));
+    if (options.markPending !== false) {
+      window.localStorage.setItem(pendingSyncKey, "1");
+    }
+  }
+}
+
+export function hasPendingJobSync() {
+  return isBrowser() && window.localStorage.getItem(pendingSyncKey) === "1";
+}
+
+export function markJobsSynced() {
+  if (isBrowser()) {
+    window.localStorage.removeItem(pendingSyncKey);
   }
 }
 
@@ -85,5 +98,7 @@ export function clearStoredJobs() {
   if (isBrowser()) {
     window.localStorage.removeItem(storageKey);
     window.localStorage.removeItem(seedVersionKey);
+    window.localStorage.removeItem(pendingSyncKey);
   }
 }
+
