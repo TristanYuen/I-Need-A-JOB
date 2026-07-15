@@ -26,6 +26,22 @@ function isJobList(value: unknown): value is Job[] {
   );
 }
 
+function containsEncodingDamage(value: unknown): boolean {
+  if (typeof value === "string") {
+    return /[\u0080-\u009f\ufffd]/.test(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.some(containsEncodingDamage);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).some(containsEncodingDamage);
+  }
+
+  return false;
+}
+
 export async function GET() {
   try {
     const data = await readJobsFromDatabase();
@@ -48,6 +64,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "投递记录格式无效。" }, { status: 400 });
   }
 
+  if (containsEncodingDamage(body.jobs)) {
+    return NextResponse.json(
+      { error: "检测到文本编码损坏，已拒绝覆盖云端数据。请刷新页面后重试。" },
+      { status: 400 }
+    );
+  }
+
   try {
     const updatedAt = await writeJobsToDatabase(body.jobs);
     return NextResponse.json({ jobs: body.jobs, updatedAt });
@@ -56,4 +79,3 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: message }, { status: 503 });
   }
 }
-
