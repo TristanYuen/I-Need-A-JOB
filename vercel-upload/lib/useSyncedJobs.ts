@@ -7,7 +7,13 @@ import {
   saveCloudJobs,
   type JobSyncStatus
 } from "@/lib/jobCloudSync";
-import { hasPendingJobSync, loadJobs, markJobsSynced, saveJobs } from "@/lib/jobStorage";
+import {
+  hasCompletedCloudSync,
+  hasPendingJobSync,
+  loadJobs,
+  markJobsSynced,
+  saveJobs
+} from "@/lib/jobStorage";
 import type { Job } from "@/lib/jobTypes";
 
 const saveDelayMs = 700;
@@ -62,7 +68,9 @@ export function useSyncedJobs() {
         const cloud = await fetchCloudJobs(controller.signal);
         cloudEnabledRef.current = true;
 
-        if (cloud.jobs === null || hasPendingJobSync()) {
+        const shouldUploadLocalChanges = hasPendingJobSync() && hasCompletedCloudSync();
+
+        if (cloud.jobs === null || shouldUploadLocalChanges) {
           await persistToCloud(latestJobsRef.current, revisionRef.current);
           return;
         }
@@ -128,5 +136,4 @@ export function useSyncedJobs() {
 
   return { jobs, setJobs, loaded, syncStatus };
 }
-
 

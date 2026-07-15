@@ -4,6 +4,7 @@ import initialJobs from "@/lib/initialJobs.json";
 const storageKey = "autumn_job_tracker_jobs_v1";
 const seedVersionKey = "autumn_job_tracker_seed_version";
 const pendingSyncKey = "autumn_job_tracker_pending_sync_v1";
+const completedCloudSyncKey = "autumn_job_tracker_completed_cloud_sync_v1";
 const seedVersion = "2026-07-16-six-jobs";
 
 function createInitialJobs() {
@@ -88,9 +89,14 @@ export function hasPendingJobSync() {
   return isBrowser() && window.localStorage.getItem(pendingSyncKey) === "1";
 }
 
+export function hasCompletedCloudSync() {
+  return isBrowser() && window.localStorage.getItem(completedCloudSyncKey) === "1";
+}
+
 export function markJobsSynced() {
   if (isBrowser()) {
     window.localStorage.removeItem(pendingSyncKey);
+    window.localStorage.setItem(completedCloudSyncKey, "1");
   }
 }
 
@@ -101,4 +107,3 @@ export function clearStoredJobs() {
     window.localStorage.removeItem(pendingSyncKey);
   }
 }
-
