@@ -2,6 +2,8 @@ import type { Job } from "@/lib/jobTypes";
 import initialJobs from "@/lib/initialJobs.json";
 
 const storageKey = "autumn_job_tracker_jobs_v1";
+const seedVersionKey = "autumn_job_tracker_seed_version";
+const seedVersion = "2026-07-16-six-jobs";
 
 function createInitialJobs() {
   return structuredClone(initialJobs) as Job[];
@@ -31,6 +33,18 @@ function isJobList(value: unknown): value is Job[] {
   );
 }
 
+function mergeMissingSeedJobs(storedJobs: Job[]) {
+  const seedJobs = createInitialJobs();
+  const existingKeys = new Set(
+    storedJobs.map((job) => `${job.company.trim()}\u0000${job.title.trim()}\u0000${job.deadline ?? ""}`)
+  );
+  const missingJobs = seedJobs.filter(
+    (job) => !existingKeys.has(`${job.company.trim()}\u0000${job.title.trim()}\u0000${job.deadline ?? ""}`)
+  );
+
+  return missingJobs.length ? [...missingJobs, ...storedJobs] : storedJobs;
+}
+
 export function loadJobs() {
   if (!isBrowser()) {
     return createInitialJobs();
@@ -44,7 +58,18 @@ export function loadJobs() {
 
   try {
     const parsed = JSON.parse(raw) as unknown;
-    return isJobList(parsed) ? parsed : createInitialJobs();
+    if (!isJobList(parsed)) {
+      return createInitialJobs();
+    }
+
+    if (window.localStorage.getItem(seedVersionKey) !== seedVersion) {
+      const migrated = mergeMissingSeedJobs(parsed);
+      window.localStorage.setItem(storageKey, JSON.stringify(migrated));
+      window.localStorage.setItem(seedVersionKey, seedVersion);
+      return migrated;
+    }
+
+    return parsed;
   } catch {
     return createInitialJobs();
   }
@@ -59,5 +84,6 @@ export function saveJobs(jobs: Job[]) {
 export function clearStoredJobs() {
   if (isBrowser()) {
     window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(seedVersionKey);
   }
 }
