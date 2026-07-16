@@ -4,6 +4,26 @@ import type { ColumnFilter, ColumnFilters, ColumnKey, Job, JobView, SortState } 
 
 const closedStatuses = new Set(["Offer", "拒绝", "放弃"]);
 const waitingStatuses = new Set(["已投", "笔试", "面试"]);
+const bottomStatuses = new Set(["拒绝", "放弃"]);
+
+function getOutcomeRank(job: Job) {
+  if (job.status === "Offer") {
+    return 0;
+  }
+
+  if (bottomStatuses.has(job.status)) {
+    return 2;
+  }
+
+  return 1;
+}
+
+function applyOutcomePositioning(jobs: Job[]) {
+  return jobs
+    .map((job, index) => ({ job, index, rank: getOutcomeRank(job) }))
+    .sort((left, right) => left.rank - right.rank || left.index - right.index)
+    .map(({ job }) => job);
+}
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -173,7 +193,7 @@ export function filterJobs(
   const viewed = searched.filter((job) => matchesView(job, view));
   const columnFiltered = applyColumnFilters(viewed, filters);
 
-  return sortJobs(columnFiltered, sort);
+  return applyOutcomePositioning(sortJobs(columnFiltered, sort));
 }
 
 export function getViewCounts(jobs: Job[]) {

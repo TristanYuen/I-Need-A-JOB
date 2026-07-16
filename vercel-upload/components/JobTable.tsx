@@ -872,7 +872,7 @@ export function JobTable({
                 </td>
               </tr>
             ) : (
-              jobs.map((job) => {
+              jobs.map((job, index) => {
                 const selected = selectedId === job.id;
                 const dragging = draggingId === job.id;
                 const dragOver = dragOverId === job.id && draggingId !== job.id;
@@ -921,9 +921,14 @@ export function JobTable({
                         onDragEnd={handleDragEnd}
                         aria-label={`拖动${job.company || job.title || "当前岗位"}调整顺序`}
                         title="拖动调整行顺序"
-                        className="mx-auto grid h-8 w-8 cursor-grab place-items-center rounded-lg text-slate-300 transition hover:bg-white hover:text-indigo-500 active:cursor-grabbing"
+                        className="mx-auto flex h-8 w-8 cursor-grab items-center justify-center gap-0.5 rounded-lg transition hover:bg-white active:cursor-grabbing"
                       >
-                        ⋮⋮
+                        <span aria-hidden="true" className="text-[9px] tracking-[-2px] text-slate-300 group-hover:text-indigo-400">
+                          ⋮⋮
+                        </span>
+                        <span className="min-w-3 text-center text-[11px] font-semibold tabular-nums text-slate-500">
+                          {index + 1}
+                        </span>
                       </button>
                     </td>
                     {orderedColumns.map((column) => renderJobCell(column, job, selected))}
